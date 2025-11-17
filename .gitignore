@@ -1,1 +1,4 @@
 us_relevant.csv
+
+# Environment variables
+.env
