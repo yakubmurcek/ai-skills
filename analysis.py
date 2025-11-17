@@ -11,26 +11,87 @@ OUTPUT_CSV = "us_relevant_ai.csv"
 
 # List of AI-related skills (case-insensitive matching)
 AI_SKILLS = [
+    # Core AI / ML terms
     "ai", "artificial intelligence",
-    "machine learning", "ml",
-    "deep learning", "dl",
+    "ml", "machine learning",
+    "dl", "deep learning",
     "neural network", "neural networks",
+    "supervised learning", "unsupervised learning",
+    "reinforcement learning", "rl",
+    "self-supervised learning",
+    "classification", "regression", "clustering",
+    "anomaly detection",
+
+    # GenAI / LLMs
+    "llm", "large language model", "large-language model",
+    "gpt", "gpt-3", "gpt-4", "gpt4", "gpt3",
+    "transformer", "transformers",
+    "bert", "roberta", "distilbert", "albert",
+    "t5", "llama", "mistral",
+    "generative ai", "genai", "gen ai",
+    "text generation", "text-generation",
+    "prompt engineering",
+
+    # Vision / Speech
+    "computer vision", "cv",
+    "ocr",
+    "image recognition", "object detection",
+    "yolo", "retinanet", "mask r-cnn", "rcnn",
+    "speech recognition",
+
+    # NLP
     "nlp", "natural language processing",
-    "computer vision",
-    "tensorflow", "pytorch", "keras",
+    "nlu", "natural language understanding",
+    "nlg", "natural language generation",
+    "tokenization", "word embeddings",
+    "word2vec", "glove", "fasttext",
+    "named entity recognition", "ner",
+    "sentiment analysis",
+
+    # ML Frameworks
+    "pytorch", "torch",
+    "tensorflow", "tf", "keras",
+    "jax", "flax",
     "scikit-learn", "sklearn",
-    "hugging face", "huggingface",
-    "large language model", "llm",
-    "generative ai", "gen ai",
-    "reinforcement learning",
-    "bert", "gpt", "transformer", "transformers",
     "xgboost", "lightgbm", "catboost",
+
+    # Data science & model building
     "data science", "data scientist",
-    "predictive modeling", "predictive models",
-    "ai/ml", "a.i.", "a.i/ml",
-    "computer vision",
+    "data mining", "feature engineering",
     "model training", "model inference",
-    "aiops"
+    "predictive modeling", "predictive analytics",
+    "timeseries", "time series",
+    "forecasting",
+
+    # MLOps / deployment / pipelines
+    "mlops", "aiops",
+    "model deployment", "model serving",
+    "model monitoring", "model governance",
+    "feature store",
+    "mlflow", "kubeflow",
+    "torchserve", "tensorflow serving",
+    "onnx", "onnxruntime",
+
+    # Cloud AI tooling
+    "sageMaker", "sagemaker",
+    "vertex ai",
+    "azure ml", "azure machine learning",
+    "aws ai", "gcp ai",
+
+    # GPU / training infra
+    "cuda", "cudnn",
+    "gpu acceleration", "gpu-accelerated",
+    "distributed training",
+
+    # Data processing (ML-relevant)
+    "pandas", "numpy", "scipy",
+    "spark ml", "pyspark", "sparkml",
+    "data pipeline", "etl pipeline",
+
+    # Edge AI
+    "tflite", "tensorflow lite",
+    "coreml",
+    "edge ai", "edge ml"
 ]
 
 # Lowercase version for reliable matching
