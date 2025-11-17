@@ -20,12 +20,10 @@ AI_SKILLS = [
     "reinforcement learning", "rl",
     "self-supervised learning",
     "classification", "regression", "clustering",
-    "anomaly detection",
 
     # GenAI / LLMs
     "llm", "large language model", "large-language model",
     "gpt", "gpt-3", "gpt-4", "gpt4", "gpt3",
-    "transformer", "transformers",
     "bert", "roberta", "distilbert", "albert",
     "t5", "llama", "mistral",
     "generative ai", "genai", "gen ai",
@@ -33,8 +31,7 @@ AI_SKILLS = [
     "prompt engineering",
 
     # Vision / Speech
-    "computer vision", "cv",
-    "ocr",
+    "computer vision",
     "image recognition", "object detection",
     "yolo", "retinanet", "mask r-cnn", "rcnn",
     "speech recognition",
@@ -56,12 +53,7 @@ AI_SKILLS = [
     "xgboost", "lightgbm", "catboost",
 
     # Data science & model building
-    "data science", "data scientist",
-    "data mining", "feature engineering",
     "model training", "model inference",
-    "predictive modeling", "predictive analytics",
-    "timeseries", "time series",
-    "forecasting",
 
     # MLOps / deployment / pipelines
     "mlops", "aiops",
