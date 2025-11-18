@@ -32,7 +32,23 @@ if not OPENAI_API_KEY:
 OPENAI_MODEL = "gpt-4o-mini"  # Can be changed to "gpt-4o" if needed
 OPENAI_TEMPERATURE = 0.1
 RATE_LIMIT_DELAY = 0.1  # Seconds between API calls
-OPENAI_BATCH_SIZE = 5  # Number of job descriptions analyzed per API request
+
+
+def _get_int_setting(env_var: str, default: int) -> int:
+    """Safely parse integer settings from the environment."""
+    value = os.getenv(env_var)
+    if value is None:
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+OPENAI_BATCH_SIZE = max(1, _get_int_setting("OPENAI_BATCH_SIZE", 5))
+OPENAI_MAX_PARALLEL_REQUESTS = max(
+    1, _get_int_setting("OPENAI_MAX_PARALLEL_REQUESTS", 3)
+)  # Number of concurrent OpenAI batch calls
 
 # Text processing limits
 MAX_JOB_DESC_LENGTH = 8000  # Characters to truncate long descriptions

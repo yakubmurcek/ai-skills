@@ -4,6 +4,7 @@
 
 import json
 import time
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional, Sequence
 
 from openai import OpenAI
@@ -11,6 +12,7 @@ from openai import OpenAI
 from .config import (
     MAX_JOB_DESC_LENGTH,
     OPENAI_BATCH_SIZE,
+    OPENAI_MAX_PARALLEL_REQUESTS,
     OPENAI_API_KEY,
     OPENAI_MODEL,
     OPENAI_TEMPERATURE,
@@ -59,12 +61,14 @@ class OpenAIJobAnalyzer:
         temperature: float = OPENAI_TEMPERATURE,
         delay_seconds: float = RATE_LIMIT_DELAY,
         batch_size: int = OPENAI_BATCH_SIZE,
+        max_concurrent_requests: int = OPENAI_MAX_PARALLEL_REQUESTS,
     ) -> None:
         self.client = OpenAI(api_key=api_key)
         self.model = model
         self.temperature = temperature
         self.delay_seconds = delay_seconds
         self.batch_size = max(1, batch_size)
+        self.max_concurrent_requests = max(1, max_concurrent_requests)
 
     def analyze_text(self, job_desc_text: Optional[str]) -> JobAnalysisResult:
         """Run the LLM prompt for a single job description."""
@@ -82,6 +86,7 @@ class OpenAIJobAnalyzer:
             JobAnalysisResult() for _ in normalized_texts
         ]
 
+        pending_batches: list[tuple[list[tuple[str, str]], dict[str, int]]] = []
         batch: list[tuple[str, str]] = []
         index_lookup: dict[str, int] = {}
         for idx, text in enumerate(normalized_texts):
@@ -91,12 +96,14 @@ class OpenAIJobAnalyzer:
             batch.append((job_id, text))
             index_lookup[job_id] = idx
             if len(batch) >= self.batch_size:
-                self._dispatch_batch(batch, index_lookup, results)
+                pending_batches.append((batch, index_lookup))
                 batch = []
                 index_lookup = {}
 
         if batch:
-            self._dispatch_batch(batch, index_lookup, results)
+            pending_batches.append((batch, index_lookup))
+
+        self._process_batches(pending_batches, results)
 
         return results
 
@@ -111,6 +118,28 @@ class OpenAIJobAnalyzer:
         if len(text) > MAX_JOB_DESC_LENGTH:
             return text[:MAX_JOB_DESC_LENGTH]
         return text
+
+    def _process_batches(
+        self,
+        pending_batches: list[tuple[list[tuple[str, str]], dict[str, int]]],
+        results: list[JobAnalysisResult],
+    ) -> None:
+        if not pending_batches:
+            return
+
+        max_workers = min(self.max_concurrent_requests, len(pending_batches))
+        if max_workers <= 1:
+            for batch, lookup in pending_batches:
+                self._dispatch_batch(batch, lookup, results)
+            return
+
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(self._dispatch_batch, batch, lookup, results)
+                for batch, lookup in pending_batches
+            ]
+            for future in futures:
+                future.result()
 
     def _dispatch_batch(
         self,
