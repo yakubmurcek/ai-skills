@@ -31,6 +31,10 @@ def job_analysis_instructions() -> str:
     Only include skills that are explicitly mentioned or clearly implied in the
     job description. Be conservative - if the job description doesn't clearly
     mention AI/ML work, set has_ai_skill to false.
+
+    When multiple job descriptions are provided with IDs, respond with a JSON
+    object that has a top-level "results" array where each element includes the
+    job's ID plus the same fields above.
     """
     return dedent(template).strip()
 
@@ -42,3 +46,27 @@ def job_analysis_prompt(job_description: str) -> str:
     {job_description}
     """
     return dedent(template).strip().format(job_description=job_description)
+
+
+def job_analysis_batch_prompt(batch_items: list[tuple[str, str]]) -> str:
+    """Build a prompt covering multiple job descriptions in a single request."""
+    header = dedent(
+        """
+        Analyze each of the following job descriptions independently.
+        Return a JSON object with a top-level `results` array.
+        Each entry must include: id, has_ai_skill, ai_skills_mentioned, confidence.
+        """
+    ).strip()
+
+    body_parts = []
+    for identifier, description in batch_items:
+        body_parts.append(
+            dedent(
+                f"""
+                Job id: {identifier}
+                Job Description:
+                {description}
+                """
+            ).strip()
+        )
+    return f"{header}\n\n" + "\n\n".join(body_parts)

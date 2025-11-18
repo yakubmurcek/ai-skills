@@ -30,12 +30,18 @@ class JobAnalysisPipeline:
     def _annotate_job_descriptions(self, df: pd.DataFrame) -> pd.DataFrame:
         """Apply the OpenAI analyzer to every job description."""
         annotated_df = df.copy()
-        results = annotated_df["job_desc_text"].apply(self.analyzer.analyze_text)
-        annotated_df["AI_skill_openai"] = results.apply(self._as_indicator)
-        annotated_df["AI_skills_openai_mentioned"] = results.apply(self._as_joined_skills)
-        annotated_df["AI_skill_openai_confidence"] = results.apply(
-            self._as_confidence
-        )
+        job_texts = [
+            None if pd.isna(text) else str(text)
+            for text in annotated_df["job_desc_text"].tolist()
+        ]
+        results = self.analyzer.analyze_texts(job_texts)
+        annotated_df["AI_skill_openai"] = [self._as_indicator(r) for r in results]
+        annotated_df["AI_skills_openai_mentioned"] = [
+            self._as_joined_skills(r) for r in results
+        ]
+        annotated_df["AI_skill_openai_confidence"] = [
+            self._as_confidence(r) for r in results
+        ]
         return annotated_df
 
     @staticmethod

@@ -32,6 +32,7 @@ if not OPENAI_API_KEY:
 OPENAI_MODEL = "gpt-4o-mini"  # Can be changed to "gpt-4o" if needed
 OPENAI_TEMPERATURE = 0.1
 RATE_LIMIT_DELAY = 0.1  # Seconds between API calls
+OPENAI_BATCH_SIZE = 5  # Number of job descriptions analyzed per API request
 
 # Text processing limits
 MAX_JOB_DESC_LENGTH = 8000  # Characters to truncate long descriptions
