@@ -2,12 +2,12 @@
 # -*- coding: utf-8 -*-
 """OpenAI API integration for analyzing job descriptions."""
 
-import json
 import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Optional, Sequence
 
 from openai import OpenAI
+from pydantic import ValidationError
 
 from .config import (
     MAX_JOB_DESC_LENGTH,
@@ -18,36 +18,52 @@ from .config import (
     OPENAI_TEMPERATURE,
     RATE_LIMIT_DELAY,
 )
-from .models import JobAnalysisResult
+from .models import BatchAnalysisResponse, JobAnalysisResult, JobAnalysisResultWithId
 from .prompts import job_analysis_batch_prompt, job_analysis_instructions
 
-JOB_RESULT_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "id": {"type": "string"},
-        "has_ai_skill": {"type": "boolean"},
-        "ai_skills_mentioned": {"type": "array", "items": {"type": "string"}},
-        "confidence": {
-            "type": "number",
-            "minimum": 0,
-            "maximum": 1,
-            "description": (
-                "Confidence for both has_ai_skill and ai_skills_mentioned answers"
-            ),
-        },
-    },
-    "required": ["id", "has_ai_skill", "ai_skills_mentioned", "confidence"],
-    "additionalProperties": False,
-}
 
-BATCH_RESPONSE_SCHEMA = {
-    "type": "object",
-    "properties": {
-        "results": {"type": "array", "items": JOB_RESULT_SCHEMA},
-    },
-    "required": ["results"],
-    "additionalProperties": False,
-}
+def _prepare_schema_for_openai(schema: dict) -> dict:
+    """
+    Prepare Pydantic-generated JSON schema for OpenAI's Responses API.
+    
+    OpenAI's Responses API requires:
+    1. additionalProperties: False for strict validation
+    2. All properties must be in the 'required' array (even if they have defaults)
+    """
+    schema = schema.copy()
+    
+    def prepare_object_schema(obj: dict) -> None:
+        """Recursively prepare object schemas for OpenAI's strict requirements."""
+        if isinstance(obj, dict):
+            if obj.get("type") == "object":
+                # Set additionalProperties: False
+                obj["additionalProperties"] = False
+                
+                # Ensure all properties are in the required array
+                properties = obj.get("properties", {})
+                if properties:
+                    # OpenAI requires ALL properties to be in the required array
+                    obj["required"] = sorted(list(properties.keys()))
+            
+            # Recursively process nested schemas
+            for value in obj.values():
+                if isinstance(value, (dict, list)):
+                    if isinstance(value, list):
+                        for item in value:
+                            if isinstance(item, dict):
+                                prepare_object_schema(item)
+                    else:
+                        prepare_object_schema(value)
+    
+    # Process the main schema
+    prepare_object_schema(schema)
+    
+    # Also process any schema definitions ($defs) that Pydantic may have generated
+    if "$defs" in schema:
+        for def_name, def_schema in schema["$defs"].items():
+            prepare_object_schema(def_schema)
+    
+    return schema
 
 
 class OpenAIJobAnalyzer:
@@ -150,7 +166,7 @@ class OpenAIJobAnalyzer:
         response_payload = self._call_openai_batch(batch)
         parsed_entries = self._parse_batch_response(response_payload)
         for entry in parsed_entries:
-            job_id = entry.get("id")
+            job_id = entry.id
             if job_id not in index_lookup:
                 continue
             results[index_lookup[job_id]] = self._to_result(entry)
@@ -164,6 +180,11 @@ class OpenAIJobAnalyzer:
             f"{job_analysis_instructions()}"
         )
         prompt = job_analysis_batch_prompt(batch_items)
+        
+        # Generate JSON schema from Pydantic model and prepare for OpenAI
+        raw_schema = BatchAnalysisResponse.model_json_schema()
+        schema = _prepare_schema_for_openai(raw_schema)
+        
         response = self.client.responses.create(
             model=self.model,
             input=[
@@ -186,43 +207,50 @@ class OpenAIJobAnalyzer:
                 "format": {
                     "type": "json_schema",
                     "name": "job_analysis_batch_result",
-                    "schema": BATCH_RESPONSE_SCHEMA,
+                    "schema": schema,
                 }
             },
         )
         return self._extract_response_text(response)
 
     @staticmethod
-    def _parse_batch_response(response_text: str) -> list[dict[str, Any]]:
+    def _parse_batch_response(response_text: str) -> list[JobAnalysisResultWithId]:
+        """Parse and validate batch response using Pydantic models."""
         if not response_text:
             return []
+        
         try:
-            parsed = json.loads(response_text)
-        except json.JSONDecodeError as error:
-            print(f"Warning: Failed to parse OpenAI JSON response: {error}")
+            # Use Pydantic's model_validate_json for direct JSON string parsing and validation
+            batch_response = BatchAnalysisResponse.model_validate_json(response_text)
+            return batch_response.results
+        except ValidationError as error:
+            # Provide detailed validation error information
+            error_details = []
+            for err in error.errors():
+                field_path = " -> ".join(str(loc) for loc in err.get("loc", []))
+                error_msg = err.get("msg", "Unknown error")
+                error_type = err.get("type", "unknown")
+                error_details.append(
+                    f"  Field '{field_path}': {error_msg} (type: {error_type})"
+                )
+            
+            print(f"Warning: Failed to validate OpenAI response with Pydantic:")
+            print(f"  Error summary: {error}")
+            if error_details:
+                print("  Field-level errors:")
+                for detail in error_details:
+                    print(detail)
+            print(f"  Response text (first 500 chars): {response_text[:500]}...")
             return []
-
-        results = parsed.get("results", [])
-        if not isinstance(results, list):
+        except Exception as error:
+            print(f"Warning: Unexpected error parsing OpenAI response: {type(error).__name__}: {error}")
+            print(f"  Response text (first 500 chars): {response_text[:500]}...")
             return []
-        normalized: list[dict[str, Any]] = []
-        for entry in results:
-            if not isinstance(entry, dict):
-                continue
-            normalized.append(entry)
-        return normalized
 
     @staticmethod
-    def _to_result(payload: dict[str, Any]) -> JobAnalysisResult:
-        skills = payload.get("ai_skills_mentioned", [])
-        if not isinstance(skills, list):
-            skills = []
-        normalized_skills = [skill for skill in skills if isinstance(skill, str)]
-        return JobAnalysisResult(
-            has_ai_skill=bool(payload.get("has_ai_skill", False)),
-            ai_skills_mentioned=normalized_skills,
-            confidence=_coerce_confidence(payload.get("confidence")),
-        )
+    def _to_result(result_with_id: JobAnalysisResultWithId) -> JobAnalysisResult:
+        """Convert JobAnalysisResultWithId to JobAnalysisResult."""
+        return result_with_id.to_job_analysis_result()
 
     @staticmethod
     def _extract_response_text(response: Any) -> str:
@@ -247,12 +275,3 @@ class OpenAIJobAnalyzer:
                 return content.strip()
 
         return ""
-
-
-def _coerce_confidence(value: Any) -> float:
-    """Convert the model confidence to a bounded float."""
-    try:
-        numeric = float(value)
-    except (TypeError, ValueError):
-        return 0.0
-    return max(0.0, min(1.0, numeric))
