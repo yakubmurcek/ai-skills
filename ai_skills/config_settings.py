@@ -20,7 +20,7 @@ def get_user_config(project_root: Path) -> Dict[str, Any]:
 
     Args:
         project_root: Absolute path to the project directory, passed in from
-            src.config so you can compose paths relative to the repo.
+            ai_skills.config so you can compose paths relative to the repo.
     """
     data_dir = project_root / "data"
     inputs_dir = data_dir / "inputs"
@@ -34,6 +34,7 @@ def get_user_config(project_root: Path) -> Dict[str, Any]:
 
     return {
         # --- Required credential ---
+        # !!! DON'T SHARE OR UPLOAD THE OPENAI_API_KEY (NOT EVEN GIT ) !!!
         # Fill this with your API key or keep None to read OPENAI_API_KEY from the environment
         "OPENAI_API_KEY": None,
         # --- OpenAI settings ---

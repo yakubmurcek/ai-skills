@@ -4,8 +4,10 @@
 
 from __future__ import annotations
 
-import pandas as pd
+from pathlib import Path
 from typing import Callable
+
+import pandas as pd
 
 from .data_io import load_input_data, reorder_columns, save_results
 from .models import JobAnalysisResult
@@ -20,14 +22,25 @@ class JobAnalysisPipeline:
         self.analyzer = analyzer or OpenAIJobAnalyzer()
 
     def run(
-        self, *, progress_callback: Callable[[int, int], None] | None = None
+        self,
+        *,
+        progress_callback: Callable[[int, int], None] | None = None,
+        input_csv: Path | str | None = None,
+        output_csv: Path | str | None = None,
     ) -> pd.DataFrame:
         """Execute the full pipeline and return the final DataFrame."""
-        df = load_input_data()
+        df = (
+            load_input_data(path=input_csv)
+            if input_csv is not None
+            else load_input_data()
+        )
         df = annotate_declared_skills(df)
         df = self._annotate_job_descriptions(df, progress_callback)
         df = reorder_columns(df)
-        save_results(df)
+        if output_csv is not None:
+            save_results(df, path=output_csv)
+        else:
+            save_results(df)
         return df
 
     def _annotate_job_descriptions(
