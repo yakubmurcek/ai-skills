@@ -17,8 +17,8 @@ load_dotenv(dotenv_path=env_path)
 DATA_DIR = PROJECT_ROOT / "data"
 INPUTS_DIR = DATA_DIR / "inputs"
 OUTPUTS_DIR = DATA_DIR / "outputs"
-INPUT_CSV = INPUTS_DIR / "us_relevant_10.csv"
-OUTPUT_CSV = OUTPUTS_DIR / "us_relevant_ai_10.csv"
+INPUT_CSV = INPUTS_DIR / "us_relevant_50.csv"
+OUTPUT_CSV = OUTPUTS_DIR / "us_relevant_ai_50.csv"
 
 # OpenAI configuration
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -45,7 +45,7 @@ def _get_int_setting(env_var: str, default: int) -> int:
         return default
 
 
-OPENAI_BATCH_SIZE = max(1, _get_int_setting("OPENAI_BATCH_SIZE", 5))
+OPENAI_BATCH_SIZE = max(1, _get_int_setting("OPENAI_BATCH_SIZE", 20))
 OPENAI_MAX_PARALLEL_REQUESTS = max(
     1, _get_int_setting("OPENAI_MAX_PARALLEL_REQUESTS", 3)
 )  # Number of concurrent OpenAI batch calls
@@ -61,82 +61,132 @@ PREFERRED_COLUMN_ORDER = [
     "AI_skill_hard",
     "AI_skill_openai",
     "AI_skill_openai_confidence",
-    "AI_skills_openai_mentioned"
+    "AI_skills_openai_mentioned",
 ]
 
 # List of AI-related skills (case-insensitive matching)
 AI_SKILLS = [
     # Core AI / ML terms
-    "ai", "artificial intelligence",
-    "ml", "machine learning",
-    "dl", "deep learning",
-    "neural network", "neural networks",
-    "supervised learning", "unsupervised learning",
-    "reinforcement learning", "rl",
+    "ai",
+    "artificial intelligence",
+    "ml",
+    "machine learning",
+    "dl",
+    "deep learning",
+    "neural network",
+    "neural networks",
+    "supervised learning",
+    "unsupervised learning",
+    "reinforcement learning",
+    "rl",
     "self-supervised learning",
-    "classification", "regression", "clustering",
-    
+    "classification",
+    "regression",
+    "clustering",
     # GenAI / LLMs
-    "llm", "large language model", "large-language model",
-    "gpt", "gpt-3", "gpt-4", "gpt4", "gpt3",
-    "bert", "roberta", "distilbert", "albert",
-    "t5", "llama", "mistral",
-    "generative ai", "genai", "gen ai",
-    "text generation", "text-generation",
-    "prompt engineering", "prompt"
-    
+    "llm",
+    "large language model",
+    "large-language model",
+    "gpt",
+    "gpt-3",
+    "gpt-4",
+    "gpt4",
+    "gpt3",
+    "bert",
+    "roberta",
+    "distilbert",
+    "albert",
+    "t5",
+    "llama",
+    "mistral",
+    "generative ai",
+    "genai",
+    "gen ai",
+    "text generation",
+    "text-generation",
+    "prompt engineering",
+    "prompt"
     # Vision / Speech
     "computer vision",
-    "image recognition", "object detection",
-    "yolo", "retinanet", "mask r-cnn", "rcnn",
+    "image recognition",
+    "object detection",
+    "yolo",
+    "retinanet",
+    "mask r-cnn",
+    "rcnn",
     "speech recognition",
-    
     # NLP
-    "nlp", "natural language processing",
-    "nlu", "natural language understanding",
-    "nlg", "natural language generation",
-    "tokenization", "word embeddings",
-    "word2vec", "glove", "fasttext",
-    "named entity recognition", "ner",
+    "nlp",
+    "natural language processing",
+    "nlu",
+    "natural language understanding",
+    "nlg",
+    "natural language generation",
+    "tokenization",
+    "word embeddings",
+    "word2vec",
+    "glove",
+    "fasttext",
+    "named entity recognition",
+    "ner",
     "sentiment analysis",
-    
     # ML Frameworks
-    "pytorch", "torch",
-    "tensorflow", "tf", "keras",
-    "jax", "flax",
-    "scikit-learn", "sklearn",
-    "xgboost", "lightgbm", "catboost",
-    
+    "pytorch",
+    "torch",
+    "tensorflow",
+    "tf",
+    "keras",
+    "jax",
+    "flax",
+    "scikit-learn",
+    "sklearn",
+    "xgboost",
+    "lightgbm",
+    "catboost",
     # Data science & model building
-    "model training", "model inference",
-    
+    "model training",
+    "model inference",
     # MLOps / deployment / pipelines
-    "mlops", "aiops",
-    "model deployment", "model serving",
-    "model monitoring", "model governance",
+    "mlops",
+    "aiops",
+    "model deployment",
+    "model serving",
+    "model monitoring",
+    "model governance",
     "feature store",
-    "mlflow", "kubeflow",
-    "torchserve", "tensorflow serving",
-    "onnx", "onnxruntime",
-    
+    "mlflow",
+    "kubeflow",
+    "torchserve",
+    "tensorflow serving",
+    "onnx",
+    "onnxruntime",
     # Cloud AI tooling
-    "sageMaker", "sagemaker",
+    "sageMaker",
+    "sagemaker",
     "vertex ai",
-    "azure ml", "azure machine learning",
-    "aws ai", "gcp ai",
-    
+    "azure ml",
+    "azure machine learning",
+    "aws ai",
+    "gcp ai",
     # GPU / training infra
-    "cuda", "cudnn",
-    "gpu acceleration", "gpu-accelerated",
+    "cuda",
+    "cudnn",
+    "gpu acceleration",
+    "gpu-accelerated",
     "distributed training",
-    
     # Data processing (ML-relevant)
-    "pandas", "numpy", "scipy",
-    "spark ml", "pyspark", "sparkml",
-    "data pipeline", "etl pipeline",
-    
+    "pandas",
+    "numpy",
+    "scipy",
+    "spark ml",
+    "pyspark",
+    "sparkml",
+    "data pipeline",
+    "etl pipeline",
     # Edge AI
-    "tflite", "tensorflow lite",
+    "tflite",
+    "tensorflow lite",
     "coreml",
-    "edge ai", "edge ml"
+    "edge ai",
+    "edge ml",
 ]
