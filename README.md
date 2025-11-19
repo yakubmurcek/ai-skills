@@ -11,8 +11,8 @@ without guessing which script to execute.
    ```bash
    pip install -r requirements.txt
    ```
-2. Create a `.env` file (or edit `ai_skills/config_settings.py`) with a valid
-   `OPENAI_API_KEY`.
+2. Create a `.env` file with a valid `OPENAI_API_KEY` (do not store the key in
+   source files).
 3. Place the raw CSV file under `data/inputs/us_relevant.csv` or adjust the
    paths inside `ai_skills/config_settings.py`.
 

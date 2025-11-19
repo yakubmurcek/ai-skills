@@ -3,7 +3,9 @@
 """Configuration settings for the AI skills analysis project.
 
 Edit `config_settings.py` to customize paths, OpenAI parameters, or limits.
-Values from that file take precedence over environment variables or `.env`.
+Values from that file take precedence over environment variables or `.env`,
+except for credentials such as `OPENAI_API_KEY`, which must come from the
+environment for security reasons.
 This module still exposes three structured sections:
 
 * `PATHS` - where data is read/written
@@ -46,6 +48,14 @@ def _get_raw_setting(env_var: str) -> Optional[Any]:
         value = USER_CONFIG[env_var]
         if value is not None:
             return value
+    value = os.getenv(env_var)
+    if value is not None and value.strip() != "":
+        return value.strip()
+    return None
+
+
+def _get_env_only_setting(env_var: str) -> Optional[str]:
+    """Read sensitive values exclusively from the environment or .env."""
     value = os.getenv(env_var)
     if value is not None and value.strip() != "":
         return value.strip()
@@ -133,7 +143,7 @@ class OpenAISettings:
 
     @classmethod
     def build(cls) -> "OpenAISettings":
-        api_key = _get_raw_setting("OPENAI_API_KEY")
+        api_key = _get_env_only_setting("OPENAI_API_KEY")
         if not api_key:
             raise ValueError(
                 "OPENAI_API_KEY environment variable is not set. "

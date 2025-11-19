@@ -6,6 +6,9 @@ Modify `get_user_config` so instructors can adjust values without touching the
 main codebase. Return `None` for any value you want to fall back to the defaults
 or environment variables. Because this is a regular Python module you can build
 paths or names programmatically (see the output example below).
+
+Credentials such as `OPENAI_API_KEY` must be provided through a `.env` file or
+direct environment variables—they cannot be set here.
 """
 
 from __future__ import annotations
@@ -33,10 +36,6 @@ def get_user_config(project_root: Path) -> Dict[str, Any]:
     # output_csv = outputs_dir / f"{teacher_name}_ai_results.csv"
 
     return {
-        # --- Required credential ---
-        # !!! DON'T SHARE OR UPLOAD THE OPENAI_API_KEY (NOT EVEN GIT ) !!!
-        # Fill this with your API key or keep None to read OPENAI_API_KEY from the environment
-        "OPENAI_API_KEY": None,
         # --- OpenAI settings ---
         "OPENAI_MODEL": "gpt-4o-mini",
         "OPENAI_TEMPERATURE": 0.1,
